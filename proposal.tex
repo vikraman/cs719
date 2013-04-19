@@ -1,0 +1,157 @@
+\documentclass{article}
+
+\usepackage{authblk}
+\usepackage[square,super]{natbib}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{bbm}
+\usepackage{url}
+
+\newcommand{\y}{\ensuremath{\mathbbm{y}}}
+
+\title{\textbf{Coding theory in the streaming model}}
+\author{Amit Kumar Sinhababu\thanks{amitks@cse.iitk.ac.in} }
+\author{Vikraman Choudhury\thanks{vikraman@cse.iitk.ac.in} }
+\affil{Department of Computer Science and Engineering,\\
+  Indian Institute of Technology Kanpur
+}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+The theory of error correcting codes is a very important problem from both theoretical and practical points of view.
+We want to look at this rich and developed theory in the data streaming model.
+
+In a typical setting of data streaming, one is allowed to see the input in only a constant number
+of one-way passes over it, and only has poly-log space in which to do intermediate calculations.
+A sample coding theory problem in streaming setting would be as follows:
+Can one recognize a Reed-Solomon codeword in one-pass using only poly-log space?
+
+\section{Motivation}
+
+\subsection{Applications in theoretical computer science}
+Coding theory is used in several important results in theoretical computer science, notably
+PCP theorem, de-randomization techniques, space lower bound proofs in data streaming, group testing problem in data streaming, pseudo-randomness.
+We would like to explore coding theory from the point of view of data streaming, and also try to apply the concepts to other areas of theoretical computer science.
+
+\subsection{Practical applications}
+
+Optical storage (CDs and DVDs), RAID and ECC memory, network protocols, use simple codes
+such as parity code and checksums which have trivial data stream algorithms for error detection.
+However, both parity code and checksums are very limited in error detecting capabilities.
+This is not acceptable in recent times of data explosion, as errors are becoming more frequent.
+
+Reed-Solomon (RS) codes, are being increasingly used in storage systems (e.g. in
+CDs and DVDs and more recently in RAID), and are well known to have good error
+correcting capabilities. However, the conventional error detection for RS codes
+is not space or pass efficient. Thus, a natural question to ask is if one can design
+a data stream algorithm to perform error detection for RS codes.
+
+In practical deployments of RS codes, size of input is relatively small.
+However, if one needs to implement the error detection algorithm in controllers on disks
+then it would be advantageous to use a data stream algorithm
+so that it is feasible to perform error detection with every read.
+
+A one-pass data streaming algorithm is also advantageous for data scrubbing since each bit will only be probed once,
+which is good for longevity of data.
+
+\section{Codeword testing\cite{sublinear}}
+
+Let $C: \Sigma^k \to \Sigma^n$ be a code with distance $d$.
+The general codeword testing problem is defined as follows:\\
+
+\textbf{Input:} A vector $\y \in \Sigma^n$ and integer parameters $0 \le \tau_1 < \tau_2 \le n$.
+
+\textbf{Output:} Decide whether $\Delta(\y,C) \le \tau_1$ or $\Delta(\y,C) \ge \tau_2$.\\
+
+where $\Delta(\y,C)$ is the Hamming distance of \y\ from the closest codeword in $C$.
+
+An ideal algorithm should solve the problem in one-pass, taking $log^{O(1)}n$ space, for some good code $C$.
+The case $\tau_2 = \tau_1 + 1$ is already solved in one pass and space $\tilde{O}(\tau_1)$\cite{rudra2010data}.
+
+It has been shown\cite{rudra2010data} that for the error detection problem,
+there exists a randomized one-pass, log-space data stream algorithm for
+a broad class of asymptotically good codes, including the RS and expander codes.
+Deterministic data stream algorithms (even with multiple passes) require linear space for such codes\cite{rudra2010data}.
+
+\subsection{Local and Tolerant Testing}
+The local testing problem for a code $C \subseteq \Sigma^n$ is the following:\\
+
+Given a received word $\y \in \Sigma^n$, we need to figure out if $\y \in C$ or
+if \y\ differs from every codeword in $C$ in at least $0 < e \le n$ positions,
+that is the Hamming distance of \y\ from every $c \in C$, is at least $e$.
+If $e = 1$, then this is the error detection problem.\\
+
+In the Tolerant testing problem, given \y\ we need to decide
+if \y\ is at a distance at most $e_1$ from some codeword or
+if it has distance at learning $e_2 > e_1$ from every codeword in $C$.
+
+Both these problems reduce to the general codeword testing problem.
+Some upper and lower bounds are shown by \citeauthor*{rudra2010data}\cite{rudra2010data}.
+
+\subsection{Polynomial fitting}
+Given a stream of $(x,y)$ points, the problem is to find univariate polynomials that
+best fit the data. Over finite fields, this problem reduces to decoding RS codes,
+while over the reals, it corresponds to the well studied polynomial regression problem.
+
+\citeauthor*{mcgregor2011polynomial}\cite{mcgregor2011polynomial} shows one-pass algorithms for two natural problems:
+\begin{itemize}
+\item Find the polynomial of a given degree $k$ that minimizes the error
+\item Find the polynomial of smallest degree that interpolates through the points with at most a given error bound
+\end{itemize}
+
+\section{Questions to be resolved}
+\label{sec:problems}
+
+\subsection{}
+Solve the codeword testing problem with one pass and $\tilde{O}(min(k,\tau_1))$ space.
+The very special case of the problem for $k = \tau_1 = \sqrt{n}$ with one pass and space $o(\sqrt{n})$ is also open.
+This is open even for the special case of RS codes\cite{sublinear}.
+
+Our main focus will be on this problem and improving the current results (if possible),
+but we would also like to look at some related problems like the following.
+
+\subsection{}
+When can irreducible polynomials be detected in a streaming setting?\cite{uurtamo-proposal}
+
+To be specific, what are the correct upper and lower bounds for space and passes required to detect
+an irreducible degree $k$ polynomial over a finite field $\mathbb{F}_q$?
+This is easy in one pass given $k\log{q}$ space.
+\citeauthor*{uurtamo-proposal}\cite{uurtamo-proposal} suggests
+``possible lower bounds could come from communication complexity –-
+a first place to look might be at the counting function for irreducible polynomials''.
+
+\subsection{}
+Given an RS received word $r$ (that is, a transmitted codeword $c$ from a RS code $C$ added to an unknown error vector $e$,
+with the Hamming weight of $e$ less than half the distance of $C$) and a target symbol $s$,
+what is the correct (streaming) lower bound for evaluating $c$ at $s$?\cite{uurtamo-proposal}
+
+\subsection{}
+What are the correct upper and lower bounds for tolerant testing?\cite{uurtamo-proposal}
+
+\subsection{}
+As these problems are related to many other algebraic and combinatorial problems as well. Hence,
+it would be interesting to look at those problems in data streaming model, and some related topics,
+like property testing and Goldwasser's newly introduced concept of pseudo-deterministic algorithms\cite{DBLP:journals/eccc/GoldreichGR12}.
+We recently came across a technique which approximates high degree polynomials using low degree rational functions.
+It would be interesting if we can apply this trick in some data streaming problems.
+
+\section{Papers to be surveyed}
+\label{sec:papers}
+\citet*{rudra2010data}\\
+\citet*{mcgregor2011polynomial}\\
+\citet*{guruswami2005tolerant}
+
+\section{Tentative Timeline}
+\begin{tabular}{ l | p{6cm} }
+  Week 1 & Review basic concepts of coding theory, finite fields, communication complexity \\
+  Weeks 2 - 3 & Survey literature (section~\ref{sec:papers}) \\
+  Weeks 4 - 7 & Work on the problems (section~\ref{sec:problems})
+\end{tabular}
+
+\bibliographystyle{unsrtnat}
+\bibliography{proposal}
+
+\end{document}

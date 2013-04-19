@@ -1,0 +1,135 @@
+\documentclass{beamer}
+
+\mode<presentation>
+{
+  \usetheme{Warsaw}
+  \setbeamercovered{transparent}
+}
+
+\usepackage[english]{babel}
+\usepackage[latin1]{inputenc}
+\usepackage{times}
+\usepackage[T1]{fontenc}
+
+% Avoid compiling twice
+\usepackage{bookmark}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{bbm}
+\newcommand{\y}{\ensuremath{\mathbbm{y}}}
+
+\title[k -- sparsity]
+{k -- sparsity}
+
+\subtitle
+{Group Testing}
+
+\author[Amit, Vikraman]
+{Amit Kumar Sinhababu\inst{1} \and Vikraman Choudhury\inst{1}}
+
+\institute[Indian Institute of Technology Kanpur]
+{
+  \inst{1}
+  Department of Computer Science and Engineering\\
+  Indian Institute of Technology Kanpur
+}
+
+\date[CS719]
+{Data Streaming Algorithms and Systems}
+
+\subject{Theoretical Computer Science}
+
+\AtBeginSubsection[]
+{
+  \begin{frame}<beamer>{Outline}
+    \tableofcontents[currentsection,currentsubsection]
+  \end{frame}
+}
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}{Outline}
+  \tableofcontents
+\end{frame}
+
+
+\section{Motivation}
+
+\begin{frame}{Coding Theory}
+  Coding Theory in Data Streaming
+\end{frame}
+
+\section{Group Testing}
+
+\begin{frame}{Applications of Group Testing}
+  \begin{itemize}
+  \item Computational Biology
+  \item DNA Library screening
+  \item Multiple access control protocols
+  \item Data pattern mining
+  \item Data Forensics
+  \end{itemize}
+\end{frame}
+
+\section{Connections to other problems}
+
+\subsection{Compressed Sensing}
+
+\subsection{Bipartite Expander Graphs}
+\begin{frame}
+  A $W$-left regular bipartite graph $[N]x[W] \rightarrow [T]$ is an
+  $(N, W, T, D, (1-\epsilon)W)$ expander if every subset $S \subset [N]$
+  of size at most $D$ has a neighborhood (denoted by $\Gamma(S)$) of size
+  at least $(1-\epsilon)|S|W$.
+\end{frame}
+
+\begin{frame}
+  Let $G$ be a $(n,w,t,2,w(1-\epsilon))$-expander. Then $M_G$ is a $d$-disjunct matrix.
+\end{frame}
+
+\begin{frame}
+  Let $G$ be a $(n,w,t,2d,w/2+1)$-expander.
+  Then $M_G$ is a $(d,d)$-list disjunct matrix.
+\end{frame}
+
+\subsection{Bipartite Disperser Graphs}
+\begin{frame}
+  A $D$-left regular bipartite graph $[N]x[D] \rightarrow [T]$ is an
+  $(N, L, T, D, \epsilon)$ disperser if every subset $S \subset [N]$
+  of size at least $L$ has a neighborhood of size at least $\epsilon|T|$.
+\end{frame}
+
+\begin{frame}
+  Let $G$ be a $(n,l,t,\epsilon t/(d+1),\epsilon)$-disperser.
+  Then $M_G$ is a $(d,l)$-list disjunct matrix.
+\end{frame}
+
+\subsection{Sparsity Separator}
+\begin{frame}
+  Given a stream of $m$ items from the domain $[n]$, let $f$ be the vector of
+  frequencies, i.e., for every $i \in [n]$, $f_i$ denotes the number of occurences
+  of $i$ in the stream.
+
+  A $(d,l)$-sparsity separator is a data structure which can determine if the
+  frequency vector corresponding to a stream has at most $d$ non-zero entries
+  or it has at least $l$ non-zero entries.
+\end{frame}
+
+\begin{frame}
+  Any $(d,l-d)$-list disjunct $txn$ matrix $M$ can be used to build a
+  $(d,l)$-sparsity separator structure.
+\end{frame}
+
+\subsection{Heavy Hitter}
+
+\subsection{Tolerant Testing}
+\begin{frame}
+  Given a received word $\y \in \Sigma^n$, we need to decide
+  if \y\ is at a distance at most $e_1$ from some codeword or
+  if it has distance at least $e_2 > e_1$ from every codeword in $C$.
+\end{frame}
+
+\end{document}
