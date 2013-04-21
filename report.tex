@@ -4,12 +4,16 @@
 \usepackage[square,super]{natbib}
 \usepackage{amsmath}
 \usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage{algorithm2e}
 \usepackage{bbm}
 \usepackage{url}
 
+\newtheorem{proposition}{Proposition}
+\newtheorem{definition}{Definition}
 \newcommand{\y}{\ensuremath{\mathbbm{y}}}
 
-\title{\textbf{k-sparsity testing}}
+\title{\textbf{Group Testing}}
 \author{Amit Kumar Sinhababu\thanks{amitks@cse.iitk.ac.in} }
 \author{Vikraman Choudhury\thanks{vikraman@cse.iitk.ac.in} }
 \affil{Department of Computer Science and Engineering,\\
@@ -20,7 +24,436 @@
 
 \maketitle
 
+\section{Motivation}
+Out original motivation in this project was to study ``coding theory in data streaming'',
+which has two aspects.
+
+\begin{itemize}
+\item Applications of theory correcting codes to efficiently solve problems in the model of data streaming.
+\item Solving coding theory problems in the model of data streaming. For example,
+  ``Can one recognize a Reed-Solomon codeword in one-pass using only poly-log space?''\cite{sublinear}
+\end{itemize}
+
+As we started, we were directed to a related combinatorial problem, ``Group testing'',
+which is important on its own, having connections with ``Compressed Sensing'', ``Data Streaming'',
+``Coding Theory'', ``Expanders'', ``Derandomization''.
+
+This project report surveys some of these interesting connections.
+
+\section{Group Testing}
+
+The group testing problem is to identify the set of ``positives'' (``defectives'', or
+``infected'', or $1$) from a large set of population/items, using as few tests as possible.
+
+\subsection{Definition}
+There is an unknown stream $x \in \{0,1\}^n$ with at most $d$ ones in it. We are allowed to test
+any subset $S$ of the indices. The answer to the test tells whether $x_i = 0$ for all $i \in S$,
+or not (at least one $x_i = 1$). The objective is to design as few tests as possible ($t$ tests)
+such that $x$ can be identified as fast as possible.
+
+Group testing strategies can be either adaptive or non-adaptive. A group testing algorithm is
+non-adaptive if all tests must be specified without knowing the outcome of other tests. Schemes
+in which the tests for the next stage depend on the results of the previous stage are known as
+adaptive procedures.
+
+In this report, ``positive'' items are same as ``defective'' or ``infected'' or $1$. On the
+other hand, ``negative'' items are same as ``good'' or $0$.
+
+$t(d, n)$ denotes the minimum number of non-adaptive tests that one would have to make to detect all
+``positive'' items given a set of $n$ items with at most $d$ ``positives''.
+
+$t^a(d, n)$ denotes the minimum number of adaptive tests that one would have to make to detect all
+``positive'' items given a set of $n$ items with at most $d$ ``positives''.
+
+Clearly, as any non-adaptive test can be converted to a $1$-stage adaptive test,
+$1 \le t^a(d,n) \le t(d,n) \le n$.
+
+Lower bound on the number of adaptive tests is given by $t^a(d,n) \ge d\log{n/d}$.
+
+Upper bound on $t^a(d,n)$ is given by $t^a(d,n) \le O(d\log{n})$. This can be achieved
+using binary search at most $d$ times.
+
+A non-adaptive group testing algorithm can be representated as $t \times N$ matrix $M$,
+where each row corresponds to the characteristic vector of the subset of $[N]$ to be tested.
+The answers to the test can be interpreted as $Mx$ where the addition is logical OR and
+multiplication is logical AND.
+
+Sufficient conditions for matrices representing uniquely decodable
+non-adaptive group testing algorithms are discussed as follows.
+
+\subsection{$d$-separable matrices}
+
+For the non-adaptive group testing strategy to be able to uniquely identify
+the set of at most $d$ positives, the measurement matrix $M$ must satisfy certain
+properties. Let the test outcome vector be $y = (y_i)_{i=1}^t$, where $y_i = 1$
+if and only if the $i^{th}$ test is positive. To be able to identify an arbitrary
+subset $D \subseteq [N]$ of at most $d$ positives, the test outcome vectors $y$
+have to be distinct. Hence, we can derive the notion of $d$-separable matrix.
+
+\begin{definition}
+  For positive integers $t,d,N$, where $d \le N$, a $t \times N$ binary matrix $M$
+  is $d$-separable\cite{rudra709} if the unions of upto $d$ columns of $M$ are all
+  distinct.
+\end{definition}
+
+If we use a $d$-separable matrix $M$, then brute-force decoding will have to check
+every subset ($\subseteq N$) of cardinality $\le d$. This gives it a time complexity
+of $O(n^d)$. If we use lookup tables, then we need the same amount of space. Clearly,
+this time/space complexity is too high. So, we need a different sufficient condition
+which will enable more efficient decoding.
+
+\subsection{$d$-disjunct matrices}
+
+\begin{definition}
+  For positive integers $t,d,N$, where $d \le N$, a $t \times N$ binary matrix $M$
+  is $d$-disjunct\cite{rudra709} if the union of arbitrary $\le d$ columns does not
+  contain another column.
+\end{definition}
+
+\subsubsection{Naive decoding}
+
+\begin{algorithm}
+  \For{$j = 1$ to $N$}{
+    \If{item $j$ belongs to at least one negative test}{
+      mark $j$ as a negative item \\
+    }
+  }
+  \Return $R$, the set of remaining items
+\end{algorithm}
+
+Correctness:
+
+Let $P(S) = \cup_{j \in S}M_j$.
+
+If $j$ is a negative item, then by definition of $d$-disjunctness,
+$P(S)$ does not contain $j$, i.e., $j$ is in some negative test.
+On the contrary, if $j$ is a positive item, then it is in no negative
+test as evident from the definition of test.
+
+Time complexity is $O(tn)$.
+
+Example of $d$-disjunct matrix:
+
+When $d = 1$, the bit test matrix $B$ is $1$-disjunct. The $i^{th}$ column
+of $B$, $i \in {0..\log{N}-1}$ is the binary representation of $i$. In this
+case, $t = \log{N}$ and this matches the lower bound for the minimum number of
+tests to locate a single positive item from $N$. For $N = 8$, the bit test matrix
+looks as follows:
+
+$$\begin{pmatrix}
+  0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 \\
+  0 & 0 & 1 & 1 & 0 & 0 & 1 & 1 \\
+  0 & 1 & 0 & 1 & 0 & 1 & 0 & 1
+\end{pmatrix}$$
+
+We consider the following example:
+
+$$\begin{pmatrix}
+  0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 \\
+  0 & 0 & 1 & 1 & 0 & 0 & 1 & 1 \\
+  0 & 1 & 0 & 1 & 0 & 1 & 0 & 1 \\
+\end{pmatrix}
+\cdot
+\begin{pmatrix}
+  0 \\
+  0 \\
+  1 \\
+  0 \\
+  0 \\
+  0 \\
+  0 \\
+  0 \\
+\end{pmatrix}
+=
+\begin{pmatrix}
+  0 \\
+  1 \\
+  0 \\
+\end{pmatrix}$$
+
+Here, bit $1$ was in the second position and the resultant vector is binary
+representation of $2$. In general, the bit test matrix times the unknown vector
+gives the location of the positive item in binary. So, decoding is easier and
+faster in this specific case of $d = 1$.
+
+\subsubsection{Construction of $d$-disjunct matrices}
+It is known that $t \times n$ $d$-disjunct matrices can be constructed for
+$t = O(d^2\log{n})$. In fact, a lower bound $t = \Omega(d^2/\log{d}\log{n})$
+is also known.
+
+It can be proved that a randomly chosen matrix is $d$-disjunct with $t = O(d^2\log{n})$
+rows with high probability. But this fact does not tell us how to obtain such a matrix
+explicitly. By derandomization of probabilistic proof of Gilbert-Varshamov bound\cite{rudra709lec6},
+one can construct a $d$-disjunct matrix in time $\tilde{O}(d^2\log{n})$. Using concatenated
+codes, one can have strongly explicit construction of $d$-disjunct matrix with
+$O(d^2\log^2{n})$ rows, i.e. this bound is worse by a $\log{n}$ factor.
+
+\subsection{$(d,l)$-list separable and disjunct matrices}
+
+It's difficult to improve upon the decoding time if we only consider
+properties of generic disjunct matrices. So, a possible direction to improve
+decoding time is to impose some more structure into disjunct matrices.
+
+The key idea\cite{rudra709lec6} is to first use a ``filtering'' matrix $F$. This matrix
+``quickly'' (in time $poly(d,\log{n})$) filters a ``small set'' (containing $poly(d,\log{n})$
+items), including all the positives and few negatives. Then, another matrix $D$, also called
+``identification'' matrix exactly detects the positives from the filtered set $L$ using
+naive decoding.
+
+This idea (motivated from list recoverable codes) is beautiful, and can possibly be applied
+to many other problems. We thought of a small extension from 2-stage filtering-identification
+to multi-stage recursive filtering-identification. Similar idea has been used in designing
+efficiently decodable compressed sensing schemes\cite{DBLP:conf/stacs/NgoPR12}.
+
+\begin{definition}
+  For positive integers $t,d,l,N$, where $d + l \le N$, a $t \times N$ binary matrix $M$
+  is said to be \textbf{$(d,l)$-list-separable} if it satisfies the following property.
+  For any $y \in {0,1}^t$, there exists a column set $R_y$ such that, if $T$ is any set of
+  at most $d$ columns of $M$ whose union is $y$, then $T \subseteq R_y$ and $|R_y| < |T| + l$.
+\end{definition}
+
+\begin{definition}
+  For positive integers $t,d,l,N$, where $d + l \le N$, a $t \times N$ binary matrix $M$ is said
+  to be \textbf{$(d,l)$-list-disjunct} if and only if, for any two disjoint sets $S$ and $T$ of
+  columns of $M$ with $|S| = l$ and $|T| = d$, there exists a row of $M$ in which some column in $S$
+  has a $1$ but all columns in $T$ have $0$s.
+\end{definition}
+
+\subsection{Applications}
+Historically, group testing was first used during World War II for testing Syphilis
+among soldiers in United States. Here, items are blood samples which are ``positive''
+if they're infected. A test is a group of blood samples. Testing a group of samples at
+a time saves many tests if the test outcome is ``negative''. If the test outcome is
+``positive'', then we come to know, that at least in the group is positive, but not which one.
+Afterwards, group testing has found various applications. Many applications are covered
+in the book.\cite{du1993combinatorial}
+
+Some other applications are:
+
+\begin{itemize}
+\item Computational Biology\cite{ngo2000survey}
+\item DNA Library screening\cite{ngo2000survey}
+\item Multiple access control protocols\cite{berger1984random}
+\item Data pattern mining\cite{macula2004group}
+\item Data Forensics\cite{goodrich2005indexing}
+\item Function learning\cite{gilbert2008group}
+\item Traitor tracing problem\cite{rudra709}
+\end{itemize}
+
+Some more applications are mentioned in \citeauthor*{cormodeDisStreams}
+\cite{cormodeDisStreams}.
+
+\section{Connections to other problems}
+
+\subsection{Heavy Hitter}
+
+\begin{definition}
+  Given a sequence of $m$ items from $[n]$, an item is considered ``hot'' or ``heavy''
+  if it occurs $> m/(d+1)$ times.
+\end{definition}
+
+From the definition, there can be at most $d$ ``heavy-hitters''. In Cormode and
+Muthukrishnan\cite{cormode2005s}, non-adaptive group testing is used to solve the
+problem in data-streaming model assuming the following ``small-tail'' property:
+all of the non-hot items occur at most $m/(d+1)$ times.
+
+\begin{algorithm}
+  create a counter $c$ \\
+  \For{each test $i \in [t]$}{
+    create a counter $c_i$ \\
+  }
+\end{algorithm}
+
+\begin{algorithm}
+  \For{each arriving (leaving) item $j \in [n]$}{
+    increment (decrement) all the counters $c_i$ such that $M_{ij}=1$ \\
+    (i.e. all counters $c_i$ for which test $i$ contains item $j$) \\
+    increment counter c \\
+  }
+\end{algorithm}
+
+To compute the ``heavy-hitters'', we consider the binary vector $x$
+such that $x_i = 1$ if and only if $c_i > m/(d+1)$. Since a test's
+outcome is positive if and only if it contains a hot item, decoding
+the vector $x$ corresponds to solving the problem.
+
+Group testing algorithms motivated by this data streaming application
+must satisfy the following requirements:\cite{rudra709}
+
+\begin{itemize}
+\item \textsl{Small number of tests}. Since number of tests $t$ is proportional to
+  the memory space needed by the streaming algorithm, we should minimize it.
+\item \textsl{Strongly explicit construction}. We should be able to compute a column
+  of $M$ quickly, i.e., given two indices $(i, j) \in [t] \times [N]$, $m_{ij}$ can be
+  computed in time $poly(t, \log{N})$.
+\item \textsl{Sub-linear decoding time}. We want an ideal disjunct or separable matrix
+  which can be decoded in sublinear time in $N$, preferably poly-log in $N$, compared
+  to $O(tN)$ time for the naive decoder.
+\item \textsl{Error-tolerance}. The ``small-tail'' property does not always hold. Since
+  the test outcome can contain false-positives, we want error-tolerant group testing strategies.
+\end{itemize}
+
+During the publication of \citeauthor*{cormode2005s}\cite{cormode2005s}, the problem of
+sublinear decoding $d$-disjunct matrices was still open. So, the authors provided alternate
+algorithms for ``heavy-hitters'' inspired by the group testing idea, leaving open the
+problem of designing efficiently decodable group testing matrix. In \citeauthor*{indyk2010efficiently}
+\cite{indyk2010efficiently}, this question was resolved. But the solution of the
+problem using their results is not as good as the best known results for the
+``heavy-hitters'' problem. Still, \citeauthor*{indyk2010efficiently}\cite{indyk2010efficiently}
+mention that ``heavy-hitters'' is illustrative of many other applications of non-adaptive
+group testing to data streaming algorithms. New applications are possible along
+these lines.
+
+\subsection{Compressed Sensing}
+
+Compressed Sensing and non-adaptive combinatorial group testing are closely
+related. Their main goal is to recover a sparse vector $x$ from an underdetermined
+set of linear equations $Mx = y$ given $M$ and $y$. But they use different models
+of arithmetic.
+
+Compressed Sensing is performed over complex/real arithmetic whereas group testing
+is performed over boolean arithmetic.
+
+$d$-separable matrix $M$ can be used to solve compressed sensing problems\cite{cormode2006combinatorial}.
+These ideas are also extended to fourier sampling case\cite{iwen2008deterministic}.
+
+\subsection{Expanders in Compressed Sensing}
+
+There are two main algorithmic approaches to sparse signal recovery or compressed
+sensing. One is utilising geometric properties (example, restricted isometry property,
+i.e. mapping $M$ preserves the equilibrium norm of sparse signals) of measurement matrix $M$.
+Random dense matrices (gaussian, fourier) satisfy this property with high probability.
+In geometric method, the recovery methods are geometric, for example, $l_1$ minimisation,
+$LP$-decoding\cite{berinde2008combining}.
+
+The second approach is combinatorial approach, utilising sparse matrices interpreted as
+adjacency matrices of sparse graphs. Combinatorial techniques are used for recovery. In
+\citeauthor*{berinde2008combining}\cite{berinde2008combining}, expanders are used in
+compressed sensing. \citeauthor*{jafarpour2009efficient}\cite{jafarpour2009efficient}
+also used expanders for efficiently decodable compressed sensing schemes.
+
+\subsection{Bipartite Expander Graphs}
+
+\begin{definition}
+  A $W$-left regular bipartite graph $[N]x[W] \rightarrow [T]$ is an
+  $(N, W, T, D, (1-\epsilon)W)$ expander if every subset $S \subset [N]$
+  of size at most $D$ has a neighborhood (denoted by $\Gamma(S)$) of size
+  at least $(1-\epsilon)|S|W$.
+\end{definition}
+
+\begin{proposition}
+  Let $G$ be a $(n,w,t,2,w(1-\epsilon))$-expander.
+  Then $M_G$ is a $d$-disjunct matrix.\cite{indyk2010efficiently}
+\end{proposition}
+\begin{proof}
+  Let us consider two different vertices $i,j \in [N], i \ne j$.
+  Now, $|\Gamma({i})| = w = |\Gamma({j})|$, and $|\Gamma({i,j})| \ge 2w(1-\epsilon))$.
+  This implies that, $|\Gamma({i}) \cap \Gamma({j})| \le 2\epsilon w$.
+  Now, if $M_g$ has to be a $d$-disjunct matrix, then
+  $(2\epsilon w)d + 1 \le w$, or, $\epsilon \le \frac{1}{d+1}$.
+\end{proof}
+
+\begin{proposition}
+  Let $G$ be a $(n,w,t,2d,w/2+1)$-expander.
+  Then $M_G$ is a $(d,d)$-list disjunct matrix.\cite{indyk2010efficiently}
+\end{proposition}
+\begin{proof}
+  Let us consider two disjoint subsets of columns of size exactly $d$, $S_1$ and $S_2$.
+  Since $M_G$ is $(d,d)$-list disjunct, $\cup_{i\in S_1} M_i \not \subseteq \cup_{j\in S_2} M_j$
+  and $\cup_{j\in S_2} M_j \not \subseteq \cup_{i\in S_1} M_i$.
+  Hence, $\Gamma(S_1) \not \subseteq \Gamma(S_2)$ and $\Gamma(S_2) \not \subseteq \Gamma(S_1)$.
+  This is true if $|\Gamma(S_1 \cup S_2)| > wd$ since $|\Gamma(S_1)|, |\Gamma(S_2)| \le wd$.
+  Taking $|\Gamma(S_1 \cup S_2) \ge wd + 2d|$, expansion factor of $G = w/2+1$.
+\end{proof}
+
+\subsection{Bipartite Disperser Graphs}
+
+\begin{definition}
+  A $D$-left regular bipartite graph $[N]x[D] \rightarrow [T]$ is an
+  $(N, L, T, D, \epsilon)$ disperser if every subset $S \subset [N]$
+  of size at least $L$ has a neighborhood of size at least $\epsilon|T|$.
+\end{definition}
+
+\begin{proposition}
+  Let $G$ be a $(n,l,t,\epsilon t/(d+1),\epsilon)$-disperser.
+  Then $M_G$ is a $(d,l)$-list disjunct matrix.\cite{indyk2010efficiently}
+\end{proposition}
+\begin{proof}
+  Let us consider two disjoint subsets of columns, $S_1$ and $S_2$, with $|S_1| \ge l$ and $|S_2| = d$.
+  Now, $|\cup_{i \in S_2}M_i| \le \frac{dt\epsilon}{d+1} \le \epsilon t$.
+  Also, $|\cup_{i\in S_1}M_i| \ge \epsilon t$, which along with the above inequality implies that,
+  $\cup_{i \in S_1}M_i \not \subseteq \cup_{i\in S_2}M_i$.
+\end{proof}
+
+\subsection{Sparsity Separator}
+
+Given a stream of $m$ items from the domain $[n]$, let $f$ be the vector of non-negative
+frequencies, i.e., for every $i \in [n]$, $f_i$ denotes the number of occurences
+of $i$ in the stream.
+
+\begin{definition}
+  A $(d,l)$-sparsity separator \cite{ganguly2008data} is a data structure
+  which can determine if the frequency vector corresponding to a stream has
+  at most $d$ non-zero entries or it has at least $l$ non-zero entries.
+\end{definition}
+
+\begin{proposition}
+  Any $(d,l-d)$-list disjunct $t \times n$ matrix $M$ can be used to build a
+  $(d,l)$-sparsity separator structure.\cite{indyk2010efficiently}
+\end{proposition}
+
+Algorithm sketch:
+
+We maintain $t$ counters, one for each test, ${c_j}_{j\in[t]}$.
+Whenever an item $i$ arrives/leaves, we increment/decrement all counters $c_j$
+such that the $j^{th}$ test contains $i$. At the end, we convert the counters
+to a result vector $r \in {0,1}^t$, such that $r_j = 1$ if and only if $c_j > 0$.
+We decode the result vector $r$ according to $M$ and count the number of ones.
+If the number is at most $l-1$ then we declare the sparsity to be at most $d$,
+otherwise we declare the sparsity to be at least $l$.
+
+Proof of correctness:
+
+We first define a binary vector $x \in {0,1}^n$ such that $x_i = 1$ if and only if $f_i > 0$.
+Then, the result vector $r$ is exactly the same as $Mx$. Now, we consider the following cases:
+\begin{itemize}
+\item $x$ has Hamming weight at most $d$. Since, $M$ is $(d, l-d)$-list disjunct,
+  the decoder for $M$ will output a vector with at most $d + (l-d) - 1 = l - 1$
+  ones in it.
+\item $x$ has Hamming weight at least $l$. Each $x_i = 1$ will contribute a one to
+  all the $r_j$ such that $i$ is contained in test $j$. Thus, the decoder for $M$
+  will output a vector with at least $l$ ones in it.
+\end{itemize}
+
+\section{Open Problems}
+
+From personal communication with Atri Rudra, we came to know about the following
+open problems.
+
+\subsection{}
+Find a (strongly or not) explicit construction of $(d,d)$-list-disjunct matrices
+attaining the probabilistic bound $O(d\log{n/d})$.
+
+\subsection{}
+Closing the gap between upper and lower bound of number of tests for $d$-disjunct matrices.
+
+\subsection{}
+Find a (strongly or not) explicit construction of $(d,poly(d)$-list-disjunct matrices
+attaining the probabilistic bound $O(d\log{n/d})$ and are efficiently decodable.
+
+\subsection{}
+Find a sufficient condition to determine whether a matrix is $(d,O(d))$-list disjunct in time $n^{O(d)}$.
+
+\section{Conclusion}
+
+We have seen the connections between group testing, compressed sensing, expander,
+streaming algorithms. Possibly these connections can be used to solve new problems.
+Deeper exploration of coding theory, expander, compressed sensing, etc. can give new
+insights in data streaming algorithms and more generally in complexity theory. From
+this project, we also came to know about the usefulness of expanders. In future,
+we want to see if we can use these ideas to the problem of Sparse Fourier Transform.
+
 \bibliographystyle{unsrtnat}
-\bibliography{proposal}
+\bibliography{report}
 
 \end{document}
